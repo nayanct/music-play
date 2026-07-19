@@ -1,0 +1,18 @@
+{
+  "name": "Music player",
+  "short_name": "Music",
+  "description": "A local music player for files, folders, and ZIP archives.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#111111",
+  "theme_color": "#151515",
+  "icons": [
+    {
+      "src": "assets/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

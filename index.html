@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#151515" />
+  <meta name="description" content="A local music player that runs entirely in your browser." />
+  <title>Music player</title>
+  <link rel="icon" href="assets/icon.svg" type="image/svg+xml" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="app-shell" id="appShell">
+    <header class="topbar">
+      <a class="app-title" href="#library" aria-label="Open songs">
+        <span class="app-glyph" aria-hidden="true">
+          <span></span><span></span><span></span><span></span>
+        </span>
+        <span>Music</span>
+      </a>
+
+      <label class="search-box" for="searchInput">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m20.4 19-4.1-4.1a7 7 0 1 0-1.4 1.4l4.1 4.1 1.4-1.4ZM5 10.5a5.5 5.5 0 1 1 11 0 5.5 5.5 0 0 1-11 0Z"/></svg>
+        <input id="searchInput" type="search" autocomplete="off" placeholder="Search your library" aria-label="Search your library" />
+        <kbd>/</kbd>
+      </label>
+
+      <div class="topbar-actions">
+        <button class="button button-primary" id="uploadTopButton" type="button">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 16h2V8.8l2.6 2.6L17 10l-5-5-5 5 1.4 1.4L11 8.8V16ZM5 18h14v2H5v-2Z"/></svg>
+          Import
+        </button>
+        <details class="data-menu" id="dataMenu">
+          <summary class="button button-secondary">Data</summary>
+          <div class="data-menu-popover">
+            <button id="exportDataButton" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 4h2v7.2l2.6-2.6L17 10l-5 5-5-5 1.4-1.4 2.6 2.6V4ZM5 18h14v2H5v-2Z"/></svg>
+              <span><strong>Export backup</strong><small>Tracks, playlists and settings</small></span>
+            </button>
+            <button id="restoreDataButton" type="button">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 16h2V8.8l2.6 2.6L17 10l-5-5-5 5 1.4 1.4L11 8.8V16ZM5 18h14v2H5v-2Z"/></svg>
+              <span><strong>Restore backup</strong><small>Merge with or replace this library</small></span>
+            </button>
+          </div>
+        </details>
+      </div>
+    </header>
+
+    <aside class="sidebar" aria-label="Library navigation">
+      <nav class="nav-list">
+        <a class="nav-item active" href="#library" data-view="library">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h3v16H4V4Zm5 3h3v13H9V7Zm5-3h3v16h-3V4Zm5 5h2v11h-2V9Z"/></svg>
+          <span>Songs</span>
+          <span class="nav-count" id="libraryCount">0</span>
+        </a>
+        <a class="nav-item" href="#favorites" data-view="favorites">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.7 3.9 12.6A5.5 5.5 0 0 1 11.7 4.8l.3.3.3-.3a5.5 5.5 0 0 1 7.8 7.8L12 20.7Z"/></svg>
+          <span>Favorites</span>
+        </a>
+        <a class="nav-item" href="#recent" data-view="recent">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 1-8.5 6H1l3.5-4L8 9H5.6A7 7 0 1 0 12 5v5l4 2-.9 1.8-5.1-2.6V3h2Z"/></svg>
+          <span>Recent</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-divider"></div>
+
+      <div class="playlist-heading">
+        <span>Playlists</span>
+        <button class="icon-button" id="newPlaylistButton" type="button" aria-label="Create playlist" title="Create playlist">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 11V5h2v6h6v2h-6v6h-2v-6H5v-2h6Z"/></svg>
+        </button>
+      </div>
+      <div class="playlist-nav" id="playlistNav"></div>
+
+      <button class="sidebar-import" id="sidebarUploadButton" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h7l2 2h9v12H3V5Zm2 4v8h14V9H5Z"/></svg>
+        Add music
+      </button>
+    </aside>
+
+    <main class="main-content" id="mainContent" tabindex="-1">
+      <section class="view-toolbar" id="viewHeader">
+        <div class="view-heading">
+          <p id="viewEyebrow">Library</p>
+          <div class="view-title-row">
+            <h1 id="viewTitle">Songs</h1>
+            <span id="viewSubtitle">0 tracks</span>
+          </div>
+        </div>
+        <div class="view-actions">
+          <label class="sort-control" for="sortSelect">
+            <span>Sort</span>
+            <select id="sortSelect" aria-label="Sort tracks">
+              <option value="added">Recently added</option>
+              <option value="title">Title</option>
+              <option value="artist">Artist</option>
+              <option value="album">Album</option>
+            </select>
+          </label>
+          <button class="icon-button" id="deletePlaylistButton" type="button" title="Delete playlist" aria-label="Delete playlist" hidden>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8l1 2h4v2H3V6h4l1-2Zm-2 6h12l-1 11H7L6 10Zm3 2v7h2v-7H9Zm4 0v7h2v-7h-2Z"/></svg>
+          </button>
+          <button class="icon-button" id="viewShuffleButton" type="button" title="Shuffle" aria-label="Shuffle" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5h-2V6.4l-3.8 3.8-1.4-1.4L17.6 5H16V3ZM3 6h4.2l10 10H21v-2h2v5h-5v-2h.2l-10-10H3V6Zm0 11h4.2l3.6-3.6 1.4 1.4L8 19H3v-2Z"/></svg>
+          </button>
+          <button class="button button-play" id="viewPlayButton" type="button" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg>
+            Play
+          </button>
+        </div>
+      </section>
+
+      <section class="track-area" id="contentSections" aria-live="polite"></section>
+
+      <section class="empty-state" id="emptyState" hidden>
+        <div class="empty-disc" aria-hidden="true"><span></span></div>
+        <h2 id="emptyTitle">No music yet</h2>
+        <p id="emptyCopy">Drop files here, or import individual tracks, folders, and ZIP archives.</p>
+        <button class="button button-primary" id="emptyUploadButton" type="button">Import music</button>
+      </section>
+    </main>
+
+    <aside class="queue-panel" id="queuePanel" aria-label="Play queue" aria-hidden="true">
+      <div class="queue-header">
+        <div><span>Playback</span><h2>Queue</h2></div>
+        <button class="icon-button" id="closeQueueButton" type="button" aria-label="Close queue">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.7 5.3 12 12-1.4 1.4-12-12 1.4-1.4Zm10.6 0 1.4 1.4-12 12-1.4-1.4 12-12Z"/></svg>
+        </button>
+      </div>
+      <div class="queue-list" id="queueList"></div>
+    </aside>
+
+    <footer class="player-bar">
+      <div class="now-playing">
+        <div class="player-art" id="playerArt">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18V5l11-2v12.5a4.5 4.5 0 1 1-2-3.7V5.4L11 6.7v11.8A4.5 4.5 0 1 1 9 18Z"/></svg>
+        </div>
+        <div class="player-meta">
+          <strong id="playerTitle">Nothing playing</strong>
+          <span id="playerArtist">Import music to begin</span>
+        </div>
+        <button class="icon-button favorite-player" id="playerFavoriteButton" type="button" title="Favorite" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20.7 3.9 12.6A5.5 5.5 0 0 1 11.7 4.8l.3.3.3-.3a5.5 5.5 0 0 1 7.8 7.8L12 20.7Zm0-2.8 6.7-6.7a3.5 3.5 0 1 0-5-4.9L12 8l-1.7-1.7a3.5 3.5 0 0 0-5 4.9l6.7 6.7Z"/></svg>
+        </button>
+      </div>
+
+      <div class="transport">
+        <div class="transport-buttons">
+          <button class="icon-button subtle" id="shuffleButton" type="button" title="Shuffle" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 3h5v5h-2V6.4l-3.8 3.8-1.4-1.4L17.6 5H16V3ZM3 6h4.2l10 10H21v-2h2v5h-5v-2h.2l-10-10H3V6Zm0 11h4.2l3.6-3.6 1.4 1.4L8 19H3v-2Z"/></svg>
+          </button>
+          <button class="icon-button" id="previousButton" type="button" title="Previous" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 5h2v14H6V5Zm3 7 10 7V5L9 12Z"/></svg>
+          </button>
+          <button class="play-button" id="playPauseButton" type="button" title="Play" disabled>
+            <svg class="play-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5v14l11-7L8 5Z"/></svg>
+            <svg class="pause-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h4v14H7V5Zm6 0h4v14h-4V5Z"/></svg>
+          </button>
+          <button class="icon-button" id="nextButton" type="button" title="Next" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 5h2v14h-2V5ZM5 5v14l10-7L5 5Z"/></svg>
+          </button>
+          <button class="icon-button subtle repeat-control" id="repeatButton" type="button" title="Repeat off" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h10V4l4 4-4 4V9H7a3 3 0 0 0-3 3H2a5 5 0 0 1 5-5Zm10 10H7v3l-4-4 4-4v3h10a3 3 0 0 0 3-3h2a5 5 0 0 1-5 5Z"/></svg>
+            <span class="repeat-one">1</span>
+          </button>
+        </div>
+        <div class="progress-row">
+          <span id="currentTime">0:00</span>
+          <input class="range" id="seekRange" type="range" min="0" max="100" step="0.1" value="0" aria-label="Seek" disabled />
+          <span id="durationTime">0:00</span>
+        </div>
+      </div>
+
+      <div class="player-extras">
+        <button class="icon-button" id="queueButton" type="button" title="Queue" disabled>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h12v2H4V6Zm0 5h12v2H4v-2Zm0 5h8v2H4v-2Zm14-4v7l5-3.5-5-3.5Z"/></svg>
+        </button>
+        <button class="icon-button" id="muteButton" type="button" title="Mute" disabled>
+          <svg class="volume-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3V9Zm11.5-.7a5 5 0 0 1 0 7.4l-1.4-1.4a3 3 0 0 0 0-4.6l1.4-1.4Zm2.8-2.8a9 9 0 0 1 0 13l-1.4-1.4a7 7 0 0 0 0-10.2l1.4-1.4Z"/></svg>
+          <svg class="muted-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9h4l5-4v14l-5-4H3V9Zm12.7 1.3 1.8 1.8 1.8-1.8 1.4 1.4-1.8 1.8 1.8 1.8-1.4 1.4-1.8-1.8-1.8 1.8-1.4-1.4 1.8-1.8-1.8-1.8 1.4-1.4Z"/></svg>
+        </button>
+        <input class="range volume-range" id="volumeRange" type="range" min="0" max="1" step="0.01" value="0.85" aria-label="Volume" disabled />
+      </div>
+    </footer>
+  </div>
+
+  <div class="drop-overlay" id="dropOverlay" aria-hidden="true">
+    <div class="drop-target">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 16h2V8.8l2.6 2.6L17 10l-5-5-5 5 1.4 1.4L11 8.8V16ZM5 18h14v2H5v-2Z"/></svg>
+      <strong>Drop music to import</strong>
+      <span>Files, folders, or ZIP archives</span>
+    </div>
+  </div>
+
+  <dialog class="modal" id="uploadModal">
+    <div class="modal-header">
+      <div><span>Library</span><h2>Import music</h2></div>
+      <button class="icon-button" data-close-modal="uploadModal" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.7 5.3 12 12-1.4 1.4-12-12 1.4-1.4Zm10.6 0 1.4 1.4-12 12-1.4-1.4 12-12Z"/></svg>
+      </button>
+    </div>
+    <div class="import-list">
+      <button class="import-option" id="chooseFilesButton" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h9l5 5v15H5V2Zm8 2H7v16h10V8h-4V4Z"/></svg>
+        <span><strong>Choose files</strong><small>One or more audio or video tracks</small></span>
+      </button>
+      <button class="import-option" id="chooseFolderButton" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5h7l2 2h9v12H3V5Zm2 4v8h14V9H5Z"/></svg>
+        <span><strong>Choose folder</strong><small>You will be asked whether to make a playlist</small></span>
+      </button>
+      <button class="import-option" id="chooseZipButton" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h8l4 4v16H6V2Zm7 2v3h3l-3-3ZM10 5h2v2h-2V5Zm0 3h2v2h-2V8Zm-1 3h4v5H9v-5Z"/></svg>
+        <span><strong>Choose ZIP archive</strong><small>Extract locally, then optionally create a playlist</small></span>
+      </button>
+    </div>
+    <p class="modal-note">Files remain in this browser. Nothing is uploaded to a server.</p>
+  </dialog>
+
+  <dialog class="modal" id="playlistImportModal">
+    <form id="playlistImportForm">
+      <div class="modal-header">
+        <div><span>Import options</span><h2>Create playlists?</h2></div>
+        <button class="icon-button" value="cancel" data-close-modal="playlistImportModal" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.7 5.3 12 12-1.4 1.4-12-12 1.4-1.4Zm10.6 0 1.4 1.4-12 12-1.4-1.4 12-12Z"/></svg>
+        </button>
+      </div>
+      <p class="dialog-copy">Select any folder or archive that should also become a playlist. Track files will be imported either way.</p>
+      <div class="playlist-import-list" id="playlistImportList"></div>
+      <div class="modal-actions">
+        <button class="button button-secondary" id="importWithoutPlaylistsButton" type="button">Import only</button>
+        <button class="button button-primary" type="submit">Import selected playlists</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal modal-small" id="playlistModal">
+    <form id="playlistForm">
+      <div class="modal-header">
+        <div><span>Playlists</span><h2>New playlist</h2></div>
+        <button class="icon-button" data-close-modal="playlistModal" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.7 5.3 12 12-1.4 1.4-12-12 1.4-1.4Zm10.6 0 1.4 1.4-12 12-1.4-1.4 12-12Z"/></svg>
+        </button>
+      </div>
+      <label class="field-label" for="playlistNameInput">Name</label>
+      <input class="text-input" id="playlistNameInput" maxlength="80" placeholder="Playlist name" required />
+      <div class="modal-actions">
+        <button class="button button-secondary" data-close-modal="playlistModal" type="button">Cancel</button>
+        <button class="button button-primary" type="submit">Create</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog class="modal modal-small" id="addToPlaylistModal">
+    <div class="modal-header">
+      <div><span>Track</span><h2>Add to playlist</h2></div>
+      <button class="icon-button" data-close-modal="addToPlaylistModal" type="button" aria-label="Close">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.7 5.3 12 12-1.4 1.4-12-12 1.4-1.4Zm10.6 0 1.4 1.4-12 12-1.4-1.4 12-12Z"/></svg>
+      </button>
+    </div>
+    <div class="playlist-picker" id="playlistPicker"></div>
+  </dialog>
+
+  <dialog class="modal modal-small" id="restoreModeModal">
+    <form id="restoreModeForm">
+      <div class="modal-header">
+        <div><span>Data</span><h2>Restore backup</h2></div>
+        <button class="icon-button" data-close-modal="restoreModeModal" type="button" aria-label="Close">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6.7 5.3 12 12-1.4 1.4-12-12 1.4-1.4Zm10.6 0 1.4 1.4-12 12-1.4-1.4 12-12Z"/></svg>
+        </button>
+      </div>
+      <p class="dialog-copy">Choose how this backup should be applied.</p>
+      <label class="radio-option"><input type="radio" name="restoreMode" value="merge" checked /><span><strong>Merge</strong><small>Keep this library and add anything missing</small></span></label>
+      <label class="radio-option"><input type="radio" name="restoreMode" value="replace" /><span><strong>Replace</strong><small>Delete this library before restoring</small></span></label>
+      <div class="modal-actions">
+        <button class="button button-secondary" data-close-modal="restoreModeModal" type="button">Cancel</button>
+        <button class="button button-primary" type="submit">Restore</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div class="context-menu" id="contextMenu" role="menu" hidden></div>
+  <div class="toast-stack" id="toastStack" aria-live="polite" aria-atomic="true"></div>
+
+  <input id="fileInput" type="file" accept="audio/*,video/mp4,.mp3,.wav,.m4a,.aac,.ogg,.oga,.flac,.opus,.webm,.mp4" multiple hidden />
+  <input id="folderInput" type="file" accept="audio/*,video/mp4,.mp3,.wav,.m4a,.aac,.ogg,.oga,.flac,.opus,.webm,.mp4" webkitdirectory directory multiple hidden />
+  <input id="zipInput" type="file" accept=".zip,application/zip" multiple hidden />
+  <input id="restoreInput" type="file" accept=".zip,.localmusic,application/zip" hidden />
+  <audio id="audioElement" preload="metadata"></audio>
+
+  <script src="vendor/jszip.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
